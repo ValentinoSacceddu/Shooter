@@ -1,3 +1,2 @@
-# Tetris
-Tetris con la grafica
-Mattoncini carini bellini
+# Shooter
+Gioco pew pew con la grafica

@@ -4,8 +4,8 @@
 
 #define PROIETTILE_CHAR '|'
 #define VELOCITA_PROIETTILE 1
-#define HEIGHT 35
-#define WIDTH 100
+#define ALTEZZA 35
+#define LARGHEZZA 100
 
 // Struttura per il proiettile
 typedef struct Proiettile {
@@ -86,28 +86,28 @@ void liberaListaProiettili(Proiettile *lista) {
     }
 }
 
-void drawBorders() {
+void confini() 
+{
     int i;
     init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
     attron(COLOR_PAIR(1));
-    // Draw top and bottom borders
-    for (i = 0; i < WIDTH; i++) {
+    // Disegna confini della mappa
+    for (i = 0; i < LARGHEZZA; i++) 
+    {
         mvaddch(0, i, '=');
-        mvaddch(HEIGHT - 1, i, '=');
+        mvaddch(ALTEZZA - 1, i, '=');
     }
-
-    // Draw left and right borders
-    for (i = 0; i < HEIGHT; i++) {
+    for (i = 0; i < ALTEZZA; i++) 
+    {
         mvaddch(i, 0, '[');
-        mvaddch(i, WIDTH - 1, ']');
+        mvaddch(i, LARGHEZZA - 1, ']');
     }
-
     attroff(COLOR_PAIR(1));
     refresh();
 }
 
-void drawObstacles() {
-    // Draw some obstacles
+void disegnaOstacoli() 
+{
     init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
     attron(COLOR_PAIR(1));
     mvprintw(10, 40, "/////////");
@@ -144,11 +144,12 @@ void drawObstacles() {
     refresh();
 }
 
-void drawHouse(int start_y, int start_x) {
+void disegnaCasa(int start_y, int start_x) 
+{
     init_pair(2, COLOR_BLUE, COLOR_BLACK);
     attron(COLOR_PAIR(2));
 
-    // Draw roof
+    // Tetto
     mvprintw(start_y - 1 , start_x , "   /\\");
     mvprintw(start_y, start_x + 1, " /  \\ ");
     mvprintw(start_y + 1, start_x + 1, "/    \\");
@@ -159,7 +160,7 @@ void drawHouse(int start_y, int start_x) {
     mvprintw(start_y + 1, start_x + 2, "____");
     mvprintw(start_y + 1, start_x + 7, "______");
 
-    // Draw walls
+    // Muri
     mvprintw(start_y + 2, start_x + 6, "|");
     mvprintw(start_y + 3, start_x + 6, "|");
     mvprintw(start_y + 2, start_x + 1, "|");
@@ -167,11 +168,11 @@ void drawHouse(int start_y, int start_x) {
     mvprintw(start_y + 2, start_x + 13, "|");
     mvprintw(start_y + 3, start_x + 13, "|");
 
-    // Draw base
+    // Base
     mvprintw(start_y + 3, start_x + 2, "____");
     mvprintw(start_y + 3, start_x + 7, "______");
 
-    // Draw toppings
+    // Finestre
     mvprintw(start_y + 2, start_x + 3, "[]");
     mvprintw(start_y + 2, start_x + 8, "[][]");
 
@@ -179,93 +180,101 @@ void drawHouse(int start_y, int start_x) {
     refresh();
 }
 
-void drawPlayer(int y, int x) {
+void disegnaPlayer(int y, int x) 
+{
     init_pair(3, COLOR_YELLOW, COLOR_BLACK);
     attron(COLOR_PAIR(3));
 
-    // Draw player
+    // Disegna giocatore
     mvprintw(y, x, "|O|");
 
     attroff(COLOR_PAIR(3));
     refresh();
 }
 
-void movePlayer(int *y, int *x, int key) {
-    // Move player based on key input
+void muoviPlayer(int *y, int *x, int key)
+{
+    // Movimento giocatore in base all'input della tastiera
     switch (key) {
         case KEY_UP:
-            if (*y > 1) // Ensure the player doesn't move beyond top border
+            if (*y > 1) // Blocca il movimento del giocatore oltre il confine superiore
                 *y -= 1;
             break;
         case KEY_DOWN:
-            if (*y < HEIGHT - 2) // Ensure the player doesn't move beyond bottom border
+            if (*y < ALTEZZA - 2) // Blocca il movimento del giocatore oltre il confine inferiore
                 *y += 1;
             break;
         case KEY_LEFT:
-            if (*x > 1) // Ensure the player doesn't move beyond left border
+            if (*x > 1) // Blocca il movimento del giocatore oltre il confine di sinistra
                 *x -= 1;
             break;
         case KEY_RIGHT:
-            if (*x < WIDTH - 4) // Ensure the player doesn't move beyond right border
+            if (*x < LARGHEZZA - 4) // Blocca il movimento del giocatore oltre il confine di destra
                 *x += 1;
             break;
     }
 }
 
-int main() {
+int main() 
+{
     int x = 5, y = 17, key, sparo = 0;
     Proiettile *listaProiettili = NULL;
-    initscr(); // Initialize ncurses
+    initscr(); // Inizializzazione ncurses
     start_color();
-    cbreak();  // Disable line buffering
-    noecho();  // Don't echo user input
-    keypad(stdscr, TRUE); // Enable arrow keys
-    curs_set(0); // Hide the cursor
+    cbreak();  // Disabilita buffering
+    noecho();  // Disabilita la stampa degli input del giocatore
+    keypad(stdscr, TRUE); // Attiva le frecce direzionali
+    curs_set(0); // nascondi il cursore
 
-    // Draw borders and obstacles
-    drawBorders();
-    drawObstacles();
-    drawHouse(20, 20);
-    drawHouse(30, 50);
-    drawHouse(10, 80);
+    // Disegna confini ed ostacoli
+    confini();
+    disegnaOstacoli();
+    disegnaCasa(20, 20);
+    disegnaCasa(30, 50);
+    disegnaCasa(10, 80);
 
-    drawPlayer(y, x);
+    disegnaPlayer(y, x);
 
-    // Main loop to handle player movement and shooting
-    while ((key = getch()) != 'q') {
-        movePlayer(&y, &x, key);
-        if (key == ' ') {
+    // Ciclo per far muovere il giocatore
+    while ((key = getch()) != 'q') 
+    {
+        muoviPlayer(&y, &x, key);
+        if (key == ' ') 
+        {
             sparo = 1;
-        } else {
+        }
+        else 
+        {
             sparo = 0;
         }
 
-        // If space is pressed, shoot
-        if (sparo) {
+        // Con la barra spaziatrice si spara
+        if (sparo) 
+        {
             aggiungiProiettile(&listaProiettili, creaProiettile(x, y, 0, -1));
         }
 
-        // Move bullets
+        // Muovi proiettili
         muoviProiettili(&listaProiettili);
 
-        // Disable bullets that go out of the window
-        disattivaProiettili(&listaProiettili, HEIGHT, WIDTH);
+        // Disabilita i proiettili che vanno oltre i confini della finestra
+        disattivaProiettili(&listaProiettili, ALTEZZA, LARGHEZZA);
 
-        erase(); // Clear the screen
-        drawBorders();
-        drawObstacles();
-        drawHouse(20, 20);
-        drawHouse(30, 50);
-        drawHouse(10, 80);
-        drawPlayer(y, x);
+        erase(); // Pulisci lo schermo
+        confini();
+        disegnaOstacoli();
+        disegnaCasa(20, 20);
+        disegnaCasa(30, 50);
+        disegnaCasa(10, 80);
+        disegnaPlayer(y, x);
         disegnaProiettili(listaProiettili);
-        refresh(); // Refresh the screen
+        refresh(); // Aggiorna la finestra
     }
 
-    // End ncurses mode
+    // Fine modalità Ncurses
     endwin();
 
-    // Free the allocated memory for the list of bullets
+    // libera la memoria allocata ai proiettili
     liberaListaProiettili(listaProiettili);
 
     return 0;

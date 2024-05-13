@@ -1,19 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <ncurses.h>
 
-#define PROIETTILE_CHAR '-'
+#define PROIETTILE_CHAR '|'
 #define VELOCITA_PROIETTILE 1
 #define HEIGHT 35
 #define WIDTH 100
-
-// Struttura per il giocatore
-typedef struct Giocatore {
-    int x;
-    int y;
-    char icon;
-} Giocatore;
 
 // Struttura per il proiettile
 typedef struct Proiettile {
@@ -24,15 +16,6 @@ typedef struct Proiettile {
     int attivo;
     struct Proiettile *next;
 } Proiettile;
-
-// Funzione per creare un nuovo giocatore
-Giocatore* creaGiocatore(int x, int y, char icon) {
-    Giocatore *g = malloc(sizeof(Giocatore));
-    g->x = x;
-    g->y = y;
-    g->icon = icon;
-    return g;
-}
 
 // Funzione per creare un nuovo proiettile
 Proiettile* creaProiettile(int x, int y, int dx, int dy) {
@@ -105,22 +88,28 @@ void liberaListaProiettili(Proiettile *lista) {
 
 void drawBorders() {
     int i;
-
+    init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
+    attron(COLOR_PAIR(1));
     // Draw top and bottom borders
     for (i = 0; i < WIDTH; i++) {
-        mvprintw(0, i, "=");
-        mvprintw(HEIGHT - 1, i, "=");
+        mvaddch(0, i, '=');
+        mvaddch(HEIGHT - 1, i, '=');
     }
 
     // Draw left and right borders
     for (i = 0; i < HEIGHT; i++) {
-        mvprintw(i, 0, "[");
-        mvprintw(i, WIDTH - 1, "]");
+        mvaddch(i, 0, '[');
+        mvaddch(i, WIDTH - 1, ']');
     }
+
+    attroff(COLOR_PAIR(1));
+    refresh();
 }
 
 void drawObstacles() {
     // Draw some obstacles
+    init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
+    attron(COLOR_PAIR(1));
     mvprintw(10, 40, "/////////");
     mvprintw(11, 40, "/////////");
     mvprintw(12, 40, "/////////");
@@ -150,11 +139,17 @@ void drawObstacles() {
     mvprintw(17, 5, "      ///");
     mvprintw(18, 5, "      ///");
     mvprintw(19, 5, "/////////");
+    attroff(COLOR_PAIR(1));
+
+    refresh();
 }
 
 void drawHouse(int start_y, int start_x) {
+    init_pair(2, COLOR_BLUE, COLOR_BLACK);
+    attron(COLOR_PAIR(2));
+
     // Draw roof
-    mvprintw(start_y - 1, start_x, "   /\\");
+    mvprintw(start_y - 1 , start_x , "   /\\");
     mvprintw(start_y, start_x + 1, " /  \\ ");
     mvprintw(start_y + 1, start_x + 1, "/    \\");
     mvprintw(start_y - 1, start_x + 7, "    \\");
@@ -179,40 +174,53 @@ void drawHouse(int start_y, int start_x) {
     // Draw toppings
     mvprintw(start_y + 2, start_x + 3, "[]");
     mvprintw(start_y + 2, start_x + 8, "[][]");
+
+    attroff(COLOR_PAIR(2));
+    refresh();
 }
 
-void drawPlayer(int y, int x, char icon) {
+void drawPlayer(int y, int x) {
+    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    attron(COLOR_PAIR(3));
+
     // Draw player
-    mvprintw(y, x, "|%c|", icon);
+    mvprintw(y, x, "|O|");
+
+    attroff(COLOR_PAIR(3));
+    refresh();
 }
 
-void movePlayer(Giocatore *g, int key) {
+void movePlayer(int *y, int *x, int key) {
     // Move player based on key input
     switch (key) {
         case KEY_UP:
-            if (g->y > 1) // Ensure the player doesn't move beyond top border
-                g->y -= 1;
+            if (*y > 1) // Ensure the player doesn't move beyond top border
+                *y -= 1;
             break;
         case KEY_DOWN:
-            if (g->y < HEIGHT - 2) // Ensure the player doesn't move beyond bottom border
-                g->y += 1;
+            if (*y < HEIGHT - 2) // Ensure the player doesn't move beyond bottom border
+                *y += 1;
             break;
         case KEY_LEFT:
-            if (g->x > 1) // Ensure the player doesn't move beyond left border
-                g->x -= 1;
+            if (*x > 1) // Ensure the player doesn't move beyond left border
+                *x -= 1;
             break;
         case KEY_RIGHT:
-            if (g->x < WIDTH - 4) // Ensure the player doesn't move beyond right border
-                g->x += 1;
+            if (*x < WIDTH - 4) // Ensure the player doesn't move beyond right border
+                *x += 1;
             break;
     }
 }
 
 int main() {
+    int x = 5, y = 17, key, sparo = 0;
+    Proiettile *listaProiettili = NULL;
     initscr(); // Initialize ncurses
-    curs_set(0); // Hide the cursor
-    noecho(); // Don't echo user input
+    start_color();
+    cbreak();  // Disable line buffering
+    noecho();  // Don't echo user input
     keypad(stdscr, TRUE); // Enable arrow keys
+    curs_set(0); // Hide the cursor
 
     // Draw borders and obstacles
     drawBorders();
@@ -221,29 +229,27 @@ int main() {
     drawHouse(30, 50);
     drawHouse(10, 80);
 
-    // Draw the first player at the bottom of the screen
-    Giocatore *giocatore1 = creaGiocatore(WIDTH / 2, HEIGHT - 2, '0');
-    drawPlayer(giocatore1->y, giocatore1->x, giocatore1->icon);
-
-    // Draw the second player at the top of the screen
-    Giocatore *giocatore2 = creaGiocatore(WIDTH / 2, 1, 'X');
-    drawPlayer(giocatore2->y, giocatore2->x, giocatore2->icon);
-
-    // Lista dei proiettili
-    Proiettile *listaProiettili = NULL;
+    drawPlayer(y, x);
 
     // Main loop to handle player movement and shooting
-    int key;
-    int player2_input = ERR; // Store input for player 2
     while ((key = getch()) != 'q') {
-        movePlayer(giocatore1, key);
-
-        // Update player 2 input if available
-        if (player2_input == ERR) {
-            player2_input = getch();
+        movePlayer(&y, &x, key);
+        if (key == ' ') {
+            sparo = 1;
+        } else {
+            sparo = 0;
         }
-        movePlayer(giocatore2, player2_input);
-        player2_input = ERR; // Reset player 2 input
+
+        // If space is pressed, shoot
+        if (sparo) {
+            aggiungiProiettile(&listaProiettili, creaProiettile(x, y, 0, -1));
+        }
+
+        // Move bullets
+        muoviProiettili(&listaProiettili);
+
+        // Disable bullets that go out of the window
+        disattivaProiettili(&listaProiettili, HEIGHT, WIDTH);
 
         erase(); // Clear the screen
         drawBorders();
@@ -251,30 +257,13 @@ int main() {
         drawHouse(20, 20);
         drawHouse(30, 50);
         drawHouse(10, 80);
-        drawPlayer(giocatore1->y, giocatore1->x, giocatore1->icon);
-        drawPlayer(giocatore2->y, giocatore2->x, giocatore2->icon);
-
-        // Shoot from the first player when space is pressed
-        if (key == ' ') {
-            aggiungiProiettile(&listaProiettili, creaProiettile(giocatore1->x, giocatore1->y, 0, -1));
-        }
-
-        // Draw and move bullets
+        drawPlayer(y, x);
         disegnaProiettili(listaProiettili);
-        muoviProiettili(&listaProiettili);
-
-        // Disable bullets that go out of the window
-        disattivaProiettili(&listaProiettili, HEIGHT, WIDTH);
-
         refresh(); // Refresh the screen
     }
 
     // End ncurses mode
     endwin();
-
-    // Free the allocated memory for the players
-    free(giocatore1);
-    free(giocatore2);
 
     // Free the allocated memory for the list of bullets
     liberaListaProiettili(listaProiettili);

@@ -18,6 +18,18 @@ typedef struct Proiettile {
     struct Proiettile *next;
 } Proiettile;
 
+typedef struct 
+{
+    int a;
+    int b;
+} Posizione;
+
+typedef struct {
+    int x_giocatore;
+    int y_giocatore;
+    int HP_casa;
+} StatoGioco;
+
 Proiettile* creaProiettile(int x, int y, int dx, int dy) {
     Proiettile *p = malloc(sizeof(Proiettile));
     p->x = x;
@@ -85,11 +97,38 @@ void liberaListaProiettili(Proiettile *lista) {
     }
 }
 
-void disegnaMenu() {
+void disegnaMenu(int selected_option) {
+    erase();
     attron(A_BOLD); // Testo in grassetto
     mvprintw(ALTEZZA / 2 - 1, LARGHEZZA / 2 - 4, "PEWPEW");
     attroff(A_BOLD);
-    mvprintw(ALTEZZA / 2 + 1, LARGHEZZA / 2 - 3, "Gioca");
+    mvprintw(ALTEZZA / 2 + 1, LARGHEZZA / 2 - 3, "Proteggi la tua casa!");
+
+    // Disegna le opzioni del menu
+    mvprintw(ALTEZZA / 2 + 3, LARGHEZZA / 2 - 7, "  GIOCA");
+    mvprintw(ALTEZZA / 2 + 4, LARGHEZZA / 2 - 7, "  PUNTEGGIO");
+    mvprintw(ALTEZZA / 2 + 5, LARGHEZZA / 2 - 7, "  CARICA SALVATAGGIO");
+    mvprintw(ALTEZZA / 2 + 6, LARGHEZZA / 2 - 7, "  INFO");
+
+    // Colora di verde l'opzione selezionata
+    attron(COLOR_PAIR(2)); // Verde
+    switch(selected_option) {
+        case 0:
+            mvprintw(ALTEZZA / 2 + 3, LARGHEZZA / 2 - 7, "> GIOCA");
+            break;
+        case 1:
+            mvprintw(ALTEZZA / 2 + 4, LARGHEZZA / 2 - 7, "> PUNTEGGIO");
+            break;
+        case 2:
+            mvprintw(ALTEZZA / 2 + 5, LARGHEZZA / 2 - 7, "> CARICA SALVATAGGIO");
+            break;
+        case 3:
+            mvprintw(ALTEZZA / 2 + 6, LARGHEZZA / 2 - 7, "> INFO");
+            break;
+    }
+    attroff(COLOR_PAIR(2));
+
+    refresh();
 }
 
 void confini() {
@@ -218,11 +257,19 @@ void disegnaZombie(int j, int k){
     refresh();  
 }
 
-/*void muoviZombie()
+/*void muoviZombie(Posizione *cpu, Posizione target) 
 {
-    srand(time(NULL));
-    int i, direzione;
-    direzione = rand() % 2 == 0 ? -1 : 1;
+    // Calcola differenza di posizioni tra CPU e target
+    int dx = target.x - cpu->x;
+    int dy = target.y - cpu->y;
+
+    // Determina la direzione in cui muoversi
+    int dirX = (dx > 0) ? 1 : (dx < 0) ? -1 : 0;  // 1 se target a destra, -1 se a sinstra, 0 se sulla stessa colonna
+    int dirY = (dy > 0) ? 1 : (dy < 0) ? -1 : 0;  // 1 se target in basso, -1 se in alto, 0 se sulla stessa riga
+
+    // Muovi CPU verso il target
+    cpu->x += dirX;
+    cpu->y += dirY;
 }
 */
 void muoviPlayer(int *y, int *x, int key) {
@@ -246,50 +293,79 @@ void muoviPlayer(int *y, int *x, int key) {
     }
 }
 
-void HPcasa(int HP){
+void HPcasa(int HP, int j, int k){
+    /*while(HP > 0){
+        disegnaZombie(j, k);
+       if (j == 50 || (j == 51 || (j == 52 || (j == 53 || (j == 54 || (j == 55 || (j == 56 || (j == 57 || (j == 58 || (j == 59 || (j == 60 || (k == 33 || (k == 32 || (k == 31 || (k == 30 || (k == 29 || (k == 28 || (k ==27 || (k == 26)))))))))))))))))));
+           HP--;
+    }
+*/
+    init_pair(7, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_BLUE, COLOR_BLACK);
     attron(COLOR_PAIR(2));
 
-    mvprintw(36, 2, "HP:");
+    mvprintw(36, 2, "HP CASA:");
     if (HP==10){
-        mvprintw(36, 5, "||||||||||");
+        mvprintw(36, 10, "||||||||||");
     }
     if (HP==9){
-        mvprintw(3, 5, "|||||||||");
+        mvprintw(36, 10, "|||||||||");
         }
     if (HP==8){
-        mvprintw(36, 5, "||||||||");
+        mvprintw(36, 10, "||||||||");
     }
     if (HP==7){
-        mvprintw(36, 5, "|||||||");
+        mvprintw(36, 10, "|||||||");
     }
     if (HP==6){
-        mvprintw(36, 5, "||||||");
+        mvprintw(36, 10, "||||||");
     }
     if (HP==5){
-        mvprintw(36, 5, "|||||");
+        mvprintw(36, 10, "|||||");
     }
     if (HP==4){
-        mvprintw(40, 55, "||||");
+        mvprintw(36, 10, "||||");
     }
     if (HP==3){
-        mvprintw(40, 55, "|||");
+        mvprintw(36, 10, "|||");
     }
     if (HP==2){
-        mvprintw(40, 55, "||");
+        mvprintw(36, 10, "||");
     }
     if (HP==1){
-        mvprintw(40, 55, "|");
+        mvprintw(36, 10, "|");
     }
     if (HP==0){
-        mvprintw(40, 55, "GAME OVER");
+        attron(COLOR_PAIR(7));
+        attron(A_BOLD);
+        mvprintw(17, 45, "GAME OVER");
+        attroff(A_BOLD);
+        attroff(COLOR_PAIR(7));
     }
 }
 
+      
+
+StatoGioco memorizzaStatoGioco(int x_giocatore, int y_giocatore, int HP_casa) {
+    StatoGioco stato;
+    stato.x_giocatore = x_giocatore;
+    stato.y_giocatore = y_giocatore;
+    stato.HP_casa = HP_casa;
+    return stato;
+}
+
+/*void ripristinaStatoGioco(StatoGioco stato) {
+    x = stato.x_giocatore;
+    y = stato.y_giocatore;
+    HP = stato.HP_casa;
+}
+*/
 int main() 
-    {
-    int x = 50, y = 27, key, sparo = 0, HP = 10;
+{
+    int x = 50, y = 27, key, sparo = 0, HP = 10, j, k;
     Proiettile *listaProiettili = NULL;
+    //Posizione cpuPosizione = {10, 10};  //Posizione iniziale CPU
+    //Posizione target = {20, 20};       // Posizione target
     initscr();
     start_color();
     cbreak();
@@ -299,12 +375,25 @@ int main()
 
     timeout(TIMEOUT_VALUE); // Imposta il timeout per la lettura dell'input
 
+    int scelta = 0;
+
     // Disegna il menu iniziale
-    disegnaMenu();
+    disegnaMenu(scelta);
     refresh();
 
     // Attendi l'input dell'utente per iniziare il gioco
-    getch();
+    while ((key = getch()) != '\n') {
+        switch(key) {
+            case KEY_UP:
+                scelta = (scelta - 1 < 0) ? 0 : scelta - 1;
+                break;
+            case KEY_DOWN:
+                scelta = (scelta + 1 > 3) ? 3 : scelta + 1;
+                break;
+        }
+        disegnaMenu(scelta);
+        refresh();
+    }
 
     // Pulisci lo schermo e inizia il gioco
     erase();
@@ -315,23 +404,30 @@ int main()
     disegnaCasaPlayer(30, 50);
     disegnaPlayer(y, x);
 
+    StatoGioco stato_iniziale = memorizzaStatoGioco(x, y, HP);
+
     while ((key = getch()) != 'q') 
     {
-        muoviPlayer(&y, &x, key);
-        if (key == ' ') 
-        {
-            sparo = 1;
-        } 
-        else 
-        {
-            sparo = 0;
+        // Gestione degli input
+        switch(key) {
+            case KEY_UP:
+            case KEY_DOWN:
+            case KEY_LEFT:
+            case KEY_RIGHT:
+                muoviPlayer(&y, &x, key);
+                break;
+            case ' ':
+                sparo = 1;
+                break;
         }
 
+        // Movimento dei proiettili
         if (sparo) 
         {
             aggiungiProiettile(&listaProiettili, creaProiettile(x, y, 0, -1));
+            sparo = 0; // Resetta lo stato di sparo dopo aver sparato
         }
-
+       //moveTowardsTarget(&cpuPosition, target);
         muoviProiettili(&listaProiettili);
         disattivaProiettili(&listaProiettili, ALTEZZA, LARGHEZZA);
 
@@ -344,7 +440,7 @@ int main()
         disegnaPlayer(y, x);
         disegnaProiettili(listaProiettili);
         disegnaZombie(2, 50);
-        HPcasa(HP);
+        HPcasa(HP, j, k);
     }
 
     endwin();

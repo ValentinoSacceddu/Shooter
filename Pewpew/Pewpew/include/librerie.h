@@ -1,0 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ncurses.h>
+#include <math.h>
+#include <time.h>
+#include <unistd.h>
+#include "player.h"
+#include "ostacoli.h"
+#include "mappa.h"
+#include "proiettili.h"
+#include "zombie.h"
+#include "menu.h"
+#include "HPcasa.h"

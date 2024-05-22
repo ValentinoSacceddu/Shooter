@@ -6,7 +6,7 @@ Riuscirai a sconfiggerli, oppure perderai e lascerai che gli zombie distruggano 
 
 ### Esecuzione
 
-Stando all'interno di gioco grazie al Makefile è possibile eseguire diversi comandi:
+Stando all'interno della cartella di gioco grazie al Makefile è possibile eseguire diversi comandi:
 
 > make / make run per compilare il programma ed eseguirlo.
 > make clean per eliminare tutti i file oggetto creati dopo l'esecuzione. 
